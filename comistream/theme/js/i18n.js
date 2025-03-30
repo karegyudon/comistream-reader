@@ -7,10 +7,12 @@
 const availableLanguages = {
   ja: "日本語",
   en: "English",
+  zh_TW: "繁體中文（台灣）",
+  zh_HK: "繁體中文（香港）"
 };
 
 // グローバル変数
-let currentLang = "ja";
+let currentLang = "en";
 let translations = {};
 
 /**
@@ -18,7 +20,17 @@ let translations = {};
  */
 function getCurrentLang() {
   // デフォルト言語をブラウザの言語設定から判断
-  let lang = navigator.language.startsWith("ja") ? "ja" : "en";
+  let lang = "en"; // デフォルトは英語
+
+  // ブラウザの言語設定を取得
+  const browserLang = navigator.language;
+  if (browserLang.startsWith("ja")) {
+    lang = "ja";
+  } else if (browserLang.startsWith("zh-TW")) {
+    lang = "zh_TW";
+  } else if (browserLang.startsWith("zh-HK")) {
+    lang = "zh_HK";
+  }
   // console.log("デフォルト言語設定: " +lang +" (navigator.language: " +navigator.language +")");
 
   // 1. Cookieから言語設定を取得（最優先）
