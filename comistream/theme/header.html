@@ -1,6 +1,7 @@
 <div class="menu">
   <div class="viewmode" onclick="javascript:toggleView();"></div>
   <div id="rawMode" class="raw" onclick="javascript:toggleRaw();"></div>
+  <div id="languageIcon" class="language" onclick="javascript:switchLanguageMenu();"></div>
   <div id="loginIcon" class="guest" onclick="javascript:login();"></div>
   <div class="history"><span id="history" style="white-space: nowrap;">-</span></div>
 </div>
@@ -25,8 +26,14 @@
   </form>
 </div>
 
+<div id="languageMenu" class="filemenu" style="position:absolute; width:auto; padding:10px; display: none; background-color:rgba(0,0,0,0.7); border-radius:5px; z-index: 1100;">
+  <div id="languageOptions">
+    <!-- 言語オプションがここに動的に追加されます -->
+  </div>
+</div>
+
 <!-- 多言語対応スクリプト読み込み -->
-<script src="/theme/js/i18n.js"></script>
+<script src="/theme/js/i18n.js" defer></script>
 
 <script>
 // Cookie取得
@@ -47,7 +54,7 @@ for(var keyValues of document.cookie.split(";") ){
 
 <div id="modal" style="display: none">
   <div id="modal-content">
-    <img id="modal-image" src="" alt="プレビュー画像" />
+    <img id="modal-image" src="" alt="プレビュー画像" width="800" height="600" />
   </div>
 </div>
 

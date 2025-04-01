@@ -116,55 +116,64 @@ function switchLanguage(lang) {
 }
 
 /**
- * 言語選択メニューを生成
+ * 言語メニューの表示/非表示を切り替える
  */
-function createLanguageSelector() {
-  const langSelector = document.createElement("div");
-  langSelector.className = "lang-selector";
-
-  // 現在の言語を表示するボタン
-  const currentLangBtn = document.createElement("a");
-  currentLangBtn.className = "current-lang";
-  currentLangBtn.href = "#";
-  currentLangBtn.textContent = availableLanguages[currentLang] + " ▼";
-  langSelector.appendChild(currentLangBtn);
-
-  // ドロップダウンメニュー
-  const langOptions = document.createElement("div");
-  langOptions.className = "lang-options";
-  langSelector.appendChild(langOptions);
-
-  // 言語オプションの追加
-  for (const [code, name] of Object.entries(availableLanguages)) {
-    if (code !== currentLang) {
-      const langOption = document.createElement("a");
-      langOption.href = "#";
-      langOption.textContent = name;
-      langOption.dataset.lang = code;
-      langOption.addEventListener("click", function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        switchLanguage(this.dataset.lang);
+function switchLanguageMenu() {
+  const menu = document.getElementById('languageMenu');
+  const icon = document.getElementById('languageIcon');
+  
+  // 言語オプションが空の場合は作成
+  const options = document.getElementById('languageOptions');
+  if (!options.children.length) {
+    for (const [code, name] of Object.entries(availableLanguages)) {
+      const langBtn = document.createElement('div');
+      langBtn.textContent = name;
+      langBtn.style.padding = '8px 16px';
+      langBtn.style.cursor = 'pointer';
+      langBtn.style.color = code === currentLang ? '#ffcc00' : 'white';
+      langBtn.style.fontWeight = code === currentLang ? 'bold' : 'normal';
+      langBtn.style.borderRadius = '4px';
+      
+      langBtn.addEventListener('mouseover', function() {
+        this.style.backgroundColor = 'rgba(255,255,255,0.2)';
       });
-      langOptions.appendChild(langOption);
+      
+      langBtn.addEventListener('mouseout', function() {
+        this.style.backgroundColor = 'transparent';
+      });
+      
+      langBtn.addEventListener('click', function() {
+        switchLanguage(code);
+      });
+      
+      options.appendChild(langBtn);
     }
   }
-
-  // 現在の言語ボタンのクリックイベント
-  currentLangBtn.addEventListener("click", function (e) {
-    e.preventDefault();
-    e.stopPropagation();
-    langOptions.classList.toggle("show");
-  });
-
-  // ドキュメントクリックでドロップダウンを閉じる
-  document.addEventListener("click", function (e) {
-    if (!langSelector.contains(e.target)) {
-      langOptions.classList.remove("show");
-    }
-  });
-
-  return langSelector;
+  
+  // メニューの位置調整
+  const rect = icon.getBoundingClientRect();
+  menu.style.top = (rect.bottom + window.scrollY) + 'px';
+  menu.style.left = (rect.left + window.scrollX - 40) + 'px';
+  
+  // 表示/非表示の切り替え
+  if (menu.style.display === 'none' || !menu.style.display) {
+    menu.style.display = 'block';
+    
+    // ドキュメントクリックでメニューを閉じる
+    const closeMenu = function(e) {
+      if (!menu.contains(e.target) && e.target !== icon) {
+        menu.style.display = 'none';
+        document.removeEventListener('click', closeMenu);
+      }
+    };
+    
+    // イベントリスナーを遅延して追加（現在のクリックが反応しないように）
+    setTimeout(() => {
+      document.addEventListener('click', closeMenu);
+    }, 10);
+  } else {
+    menu.style.display = 'none';
+  }
 }
 
 /**
@@ -200,57 +209,6 @@ function initI18n() {
   loadLanguageFile(function () {
     // ページ内のテキストを翻訳
     translatePage();
-
-    // 言語選択メニューを追加
-    const menu = document.querySelector(".menu");
-    if (menu) {
-      const langSelector = createLanguageSelector();
-      menu.appendChild(langSelector);
-    }
-
-    // CSSスタイルを動的に追加
-    const style = document.createElement("style");
-    style.textContent = `
-      .lang-selector {
-        float: right;
-        margin-right: 10px;
-        position: relative;
-        z-index: 1100;
-      }
-      .current-lang {
-        color: white;
-        text-decoration: none;
-        padding: 5px 10px;
-        display: block;
-        cursor: pointer;
-      }
-      .lang-options {
-        display: none;
-        position: absolute;
-        background-color: rgba(0, 0, 0, 0.8);
-        min-width: 120px;
-        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-        z-index: 1100;
-        border-radius: 4px;
-        top: 100%;
-        right: 0;
-      }
-      .lang-options.show {
-        display: block;
-      }
-      .lang-options a {
-        color: white;
-        padding: 12px 16px;
-        text-decoration: none;
-        display: block;
-        cursor: pointer;
-      }
-      .lang-options a:hover {
-        background-color: rgba(80, 80, 80, 0.8);
-        border-radius: 4px;
-      }
-    `;
-    document.head.appendChild(style);
   });
 }
 

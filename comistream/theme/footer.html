@@ -301,10 +301,10 @@ function login(){
 function toggleView(){
   if( document.getElementsByTagName("link")[0].href.match(/style\.css/)) {
     document.cookie = "viewmode=cover; path=/; max-age=31536000;";
-    document.getElementsByTagName("link")[0].href = themeDir+"/theme/style_cover.css";
+    document.getElementsByTagName("link")[0].href = themeDir+"/theme/style_cover.css?2025040101";
   }else{
     document.cookie = "viewmode=list; path=/; max-age=31536000;";
-    document.getElementsByTagName("link")[0].href = themeDir+"/theme/style.css";
+    document.getElementsByTagName("link")[0].href = themeDir+"/theme/style.css?2025040100";
   }
 }
 
