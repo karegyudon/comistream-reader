@@ -55,8 +55,6 @@ function make_image() {
   filePath="$searchPath/$1"
   imageType="$2"
 
-  # 開始時間を記録
-  start_time=$(date +%s.%N)
 
   # 60分以上前のtmpディレクトリ内項目を削除
   # 高頻度すぎたので廃止
@@ -90,6 +88,8 @@ function make_image() {
   # 出力ファイルが存在しないか0バイトの場合
   if [ ! -s "$outputFile" ]; then
     if [[ "$filePath" =~ \.(zip|ZIP|cbz|CBZ|rar|RAR|cbr|CBR|7z|7Z|cb7|CB7|pdf|PDF|epub|EPUB|ePub)$ ]]; then
+      # 開始時間を記録
+      start_time=$(date +%s.%N)
       outputBasename=$(basename "${outputFile}")
       existingFile=$(find "$webRoot/theme/$imageType/" -type f | grep -m 1 -F "${outputBasename}")
       # logger -t "comistream make_image_run.sh[$$]" -p local1.notice "$existingFile $outputFile $1"
@@ -136,7 +136,15 @@ else
   # 引数が渡されなかった場合は、findコマンドを使用して処理する
   cd "$searchPath"
 
-  # ループで実行
-  find $cover_subDir -type f -not -name '.*' | xargs -I{} -d '\n' -P ${multiProc} bash -c 'make_image "{}" 2>'"$errorLog"
+  # fdコマンドが利用可能かチェック
+  if command -v fd >/dev/null 2>&1; then
+    logger -t "comistream make_image_run.sh[$$]" -p local1.debug "using fd command for faster processing"
+    # fdコマンドでファイル検索を実行
+    fd . $cover_subDir --type f --hidden false | xargs -I{} -d '\n' -P ${multiProc} bash -c 'make_image "{}" 2>'"$errorLog"
+  else
+    logger -t "comistream make_image_run.sh[$$]" -p local1.debug "using find command for processing"
+    # ループで実行
+    find $cover_subDir -type f -not -name '.*' | xargs -I{} -d '\n' -P ${multiProc} bash -c 'make_image "{}" 2>'"$errorLog"
+  fi
 
 fi
