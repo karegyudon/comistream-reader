@@ -128,4 +128,7 @@
     IndexStyleSheet /theme/style_cover.css
   </If>
 
+  # MIME TYPES
+  AddType audio/flac .flac
+
 

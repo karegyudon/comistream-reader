@@ -26,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - セッションの有効期限を31日に設定
 - インスペクター表示のページ番号を「現在ページ/最終ページ」スタイルに変更
 - findコマンドの代わりにfdコマンドが入っていればそっちを利用するように変更、Dockerfileにはfdを追加インストール
-- Dockerfileの/etc/mime.typesのflacのMIMEをaudio/x-flacからaudio/flacに変更
+- Dockerfileの/etc/mime.typesのflacのMIMEをaudio/x-flacからaudio/flacに変更、htaccessも更新
 
 ### 修正
 - Dockerfileにunrar追加
