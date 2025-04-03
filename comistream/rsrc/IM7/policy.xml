@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- /usr/etc/ImageMagick-7/policy.xml -->
+<!-- magick -list configure | grep CONFIGURE_PATH -->
+<!-- magick -list policy -->
+<policymap>
+  <!-- リソース制限（現在の設定） -->
+<policy domain="resource" name="memory" value="1GiB"/>
+<policy domain="resource" name="map" value="1GiB"/>
+<policy domain="resource" name="area" value="1GiB"/>
+<policy domain="resource" name="disk" value="10GiB"/>
+
+  <!-- 画像フォーマットのホワイトリスト設定 -->
+  <policy domain="coder" rights="none" pattern="*" />
+
+  <!-- 基本フォーマット -->
+  <policy domain="coder" rights="read|write" pattern="JPEG" />
+  <policy domain="coder" rights="read|write" pattern="JPG" />
+  <policy domain="coder" rights="read|write" pattern="PNG" />
+  <policy domain="coder" rights="read|write" pattern="GIF" />
+  <policy domain="coder" rights="read|write" pattern="WEBP" />
+  <policy domain="coder" rights="read|write" pattern="AVIF" />
+  <policy domain="coder" rights="read|write" pattern="BMP" />
+  <policy domain="coder" rights="read|write" pattern="TIFF" />
+  <policy domain="coder" rights="read|write" pattern="TIF" />
+  <policy domain="coder" rights="read|write" pattern="PDF" />
+
+  <!-- 推奨追加フォーマット -->
+  <policy domain="coder" rights="read|write" pattern="SVG" />
+  <policy domain="coder" rights="read|write" pattern="HEIC" />
+  <policy domain="coder" rights="read|write" pattern="HEIF" />
+  <policy domain="coder" rights="read|write" pattern="ICO" />
+  <policy domain="coder" rights="read|write" pattern="WEBM" />
+  <!-- PDF関連追加フォーマット -->
+  <policy domain="coder" rights="read|write" pattern="JP2" />
+  <policy domain="coder" rights="read|write" pattern="JPEG2000" />
+  <policy domain="coder" rights="read|write" pattern="JBIG2" />
+  <policy domain="coder" rights="read|write" pattern="CCITT" />
+  <policy domain="coder" rights="read|write" pattern="FAX" />
+  <policy domain="coder" rights="read|write" pattern="DCT" />
+  <policy domain="coder" rights="read|write" pattern="EPS" />
+  <policy domain="coder" rights="read|write" pattern="PS" />
+  <policy domain="coder" rights="read|write" pattern="XCF" />
+  <policy domain="coder" rights="read|write" pattern="PBM" />
+  <policy domain="coder" rights="read|write" pattern="PGM" />
+  <policy domain="coder" rights="read|write" pattern="PPM" />
+  <policy domain="coder" rights="read|write" pattern="AI" />
+  <policy domain="coder" rights="read|write" pattern="PSD" />
+
+</policymap>

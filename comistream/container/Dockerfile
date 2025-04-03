@@ -9,7 +9,7 @@
 # @author      Comistream Project
 # @copyright   2024 Comistream Project
 # @license     GPL3.0 License
-# @version     1.0.0
+# @version     1.0.1
 # @link        https://github.com/sorshi/comistream-reader
 # -----------------------------------------------------------------------------
 #
@@ -53,6 +53,8 @@ RUN dnf update -y &&  \
     chmod 666 /home/user/public/.htaccess && \
     chmod 755 /home/user/comistream/cron/cron_comistream_daily.sh && \
     ln -s /home/user/comistream/cron/cron_comistream_daily.sh /etc/cron.daily/ && \
+    mkdir -p /usr/etc/ImageMagick-7 && \
+    cp /home/user/comistream/rsrc/IM7/policy.xml /usr/etc/ImageMagick-7/policy.xml && \
     # テスト用コード
     # ln -s /home/user/comistream/cron/cron_comistream_daily.sh /etc/cron.hourly/ && \
     rm -f /etc/httpd/conf.d/welcome.conf && rm -rf /etc/httpd/conf/httpd.conf && \
