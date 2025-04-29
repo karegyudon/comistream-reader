@@ -1816,13 +1816,27 @@ function openPdf()
     }
 
     // ページ数取得/ページリスト作成
-    $maxPage = shell_exec("$cpdf -pages -i \"$cacheDir/$file/file\"");
-    $maxPage = trim($maxPage);
-    writelog("DEBUG openPdf() $cpdf -pages -i \"$cacheDir/$file/file\"");
-    // TODO pdfinfoで書き換えられないか検討
-    // $pdfinfo = $conf["pdfinfo"];
-    // $maxPage = shell_exec("$pdfinfo \"$cacheDir/$file/file\" | grep Pages | awk '{print $2}'");
-    // writelog("DEBUG openPdf() $pdfinfo \"$cacheDir/$file/file\":".$$maxPage);
+    writelog("DEBUG openPdf() START pdfinfo ");
+    $pdfinfo = $conf["pdfinfo"];
+    if (empty($pdfinfo) || !is_executable($pdfinfo)) {
+        writelog("DEBUG openPdf() pdfinfo is not available;retry with cpdf");
+        $maxPage = shell_exec("$cpdf -pages -i \"$cacheDir/$file/file\"");
+        $maxPage = trim($maxPage);
+        writelog("DEBUG openPdf() COMPLETE $cpdf -pages -i \"$cacheDir/$file/file\" maxPage:" . $maxPage);
+    } else {
+        writelog("DEBUG openPdf() file path of pdfinfo:" . $pdfinfo);
+        $maxPage = shell_exec("$pdfinfo \"$cacheDir/$file/file\" | grep Pages | awk '{print $2}'");
+        $maxPage = trim($maxPage);
+        writelog("DEBUG openPdf() $pdfinfo \"$cacheDir/$file/file\":" . $maxPage);
+        if ((is_numeric($maxPage)) && ($maxPage >= 1)) {
+            writelog("DEBUG openPdf() maxPage:" . $maxPage);
+        } else {
+            writelog("DEBUG openPdf() pdfinfo failed;retry with cpdf");
+            $maxPage = shell_exec("$cpdf -pages -i \"$cacheDir/$file/file\"");
+            $maxPage = trim($maxPage);
+            writelog("DEBUG openPdf() COMPLETE $cpdf -pages -i \"$cacheDir/$file/file\" maxPage:" . $maxPage);
+        }
+    }
     shell_exec("seq -f \"p%g_.jpg\" $maxPage > \"$cacheDir/$file/index\"");
 
     // 目次を作成

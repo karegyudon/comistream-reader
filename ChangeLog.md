@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - インスペクター表示のページ番号を「現在ページ/最終ページ」スタイルに変更
 - findコマンドの代わりにfdコマンドが入っていればそっちを利用するように変更、Dockerfileにはfdを追加インストール
 - Dockerfileの/etc/mime.typesのflacのMIMEをaudio/x-flacからaudio/flacに変更、htaccessも更新
+- pdfファイルを開くときに総ページ数取得にpdfinfoコマンドを利用するように
 
 ### 修正
 - Dockerfileにunrar追加
