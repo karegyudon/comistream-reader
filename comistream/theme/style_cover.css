@@ -56,6 +56,14 @@ a:hover {
   color: white;
   text-decoration: underline;
 }
+.language{
+  float:left;
+  width:32px;
+  height:28px;
+  margin:1px 4px 0px 0px;
+  background:url("icons/language.png") center/contain no-repeat;
+  cursor: pointer;
+}
 .guest {
   float: left;
   width: 32px;
@@ -76,7 +84,7 @@ a:hover {
   float: left;
   width: 32px;
   height: 28px;
-  margin: 1px 8px 0px 0px;
+  margin: 1px 6px 0px 0px;
   background: url("icons/rawfile.png") center/contain no-repeat;
   cursor: pointer;
 }
@@ -84,7 +92,7 @@ a:hover {
   float: left;
   width: 32px;
   height: 28px;
-  margin: 1px 8px 0px 0px;
+  margin: 1px 6px 0px 0px;
   background: url("icons/cmpfile.png") center/contain no-repeat;
   cursor: pointer;
 }
@@ -96,13 +104,33 @@ a:hover {
   background: url("icons/listview.png") center/contain no-repeat;
   cursor: pointer;
 }
-.history {
-  float: right;
-  display: inline-block;
-  max-width: 70%;
-  overflow: hidden;
-  text-overflow: ellipsis;
+/* .history{
+  float:right;
+  display:inline-block;
+  max-width:70%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+} */
+.history{
+  float:right;
+  display:inline-block;
+  max-width: calc(100% - 165px);
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space: nowrap; /* テキストを一行に保つ */
 }
+/* タブレットサイズのデバイス向け */
+/* @media screen and (max-width:768px){
+  .history{
+    max-width: calc(100% - 150px);
+  }
+} */
+/* スマートフォンサイズのデバイス向け */
+/* @media screen and (max-width:480px){
+  .history{
+    max-width: calc(100% - 100px);
+  }
+} */
 .history_book {
   padding-left: 20px;
   background: url("icons/open.png") 0px center no-repeat;
@@ -265,6 +293,9 @@ td.indexcolsize {
 
 #modal-image {
   max-width: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
   z-index: 30;
 }
 

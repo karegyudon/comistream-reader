@@ -9,7 +9,7 @@
 # @author      Comistream Project
 # @copyright   2024 Comistream Project
 # @license     GPL3.0 License
-# @version     1.0.0
+# @version     1.0.1
 # @link        https://github.com/sorshi/comistream-reader
 # -----------------------------------------------------------------------------
 #
@@ -26,11 +26,12 @@ COPY /comistream-tools/ImageMagick--clang-x86_64-7.1.1-23-patch.tar.xz /tmp/
 COPY /comistream-tools/comistream.tar.gz /tmp/comistream.tar.gz
 # システムの更新と必要なパッケージのインストール
 RUN dnf update -y &&  \
-    dnf install -y tar httpd php sqlite-devel zstd libzstd-devel ghostscript rsyslog-logrotate cronie cronie-anacron crontabs epel-release unrar && \
+    dnf install -y tar httpd php sqlite-devel zstd libzstd-devel ghostscript rsyslog-logrotate cronie cronie-anacron crontabs epel-release unrar fd-find && \
     dnf install -y b3sum php-zstd cifs-utils unzip ImageMagick libavif-devel poppler-utils fontconfig && \
     dnf clean all && \
     useradd -m user && \
     ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime && \
+    sed -i 's/audio\/x-flac\s*flac/audio\/flac\t\tflac/' /etc/mime.types && \
     tar xvaf /tmp/ImageMagick--clang-x86_64-7.1.1-23-patch.tar.xz -C /usr/local/bin && \
     rm -rf /tmp/ImageMagick--clang-x86_64-7.1.1-23-patch.tar.xz && \
     ls -lhtr /usr/local/bin/ && \
@@ -40,7 +41,8 @@ RUN dnf update -y &&  \
     tar -xzvf /tmp/comistream.tar.gz -C /home/user/comistream --strip-components=1 && \
     rm /tmp/comistream.tar.gz && \
     mkdir -p /home/user/comistream/data && \
-    chgrp -R apache /home/user/comistream/data/ && \
+    # chgrp -R apache /home/user/comistream/data/ && \
+    chown -R apache:apache /home/user/comistream/data/ && \
     chmod -R 775 /home/user/comistream/data/ && \
     chmod 775 /home/user && chgrp apache /home/user && \
     ln -s /home/user/comistream/code/comistream.php /var/www/cgi-bin/ && \
@@ -52,6 +54,8 @@ RUN dnf update -y &&  \
     chmod 666 /home/user/public/.htaccess && \
     chmod 755 /home/user/comistream/cron/cron_comistream_daily.sh && \
     ln -s /home/user/comistream/cron/cron_comistream_daily.sh /etc/cron.daily/ && \
+    mkdir -p /usr/etc/ImageMagick-7 && \
+    cp /home/user/comistream/rsrc/IM7/policy.xml /usr/etc/ImageMagick-7/policy.xml && \
     # テスト用コード
     # ln -s /home/user/comistream/cron/cron_comistream_daily.sh /etc/cron.hourly/ && \
     rm -f /etc/httpd/conf.d/welcome.conf && rm -rf /etc/httpd/conf/httpd.conf && \
@@ -60,6 +64,19 @@ RUN dnf update -y &&  \
     chmod 755 /run/php-fpm && \
     mkdir -p /var/cache/fontconfig && \
     chmod 777 /var/cache/fontconfig && \
+
+    # PHP-FPMの設定を変更(from [#11])
+    sed -i "s|listen = /run/php-fpm/www.sock|listen = 9000|g" /etc/php-fpm.d/www.conf && \
+    sed -i "s|^listen.acl_users|;listen.acl_users|g" /etc/php-fpm.d/www.conf && \
+    sed -i "s|^listen.acl_groups|;listen.acl_groups|g" /etc/php-fpm.d/www.conf && \
+
+    # Apacheの設定を変更(from [#11])
+    sed -i "s#proxy:unix:/run/php-fpm/www.sock|fcgi://localhost#proxy:fcgi://localhost:9000#g" /etc/httpd/conf.d/php.conf && \
+
+    # 権限変更(from [#11])上でやっている
+    # chown -R apache:apache /home/user/comistream/data && \
+    # chmod -R 755 /home/user/comistream/data && \
+
     echo '#!/bin/bash' > /start.sh && \
     echo 'trap "echo Shutting down...; kill -TERM \$(jobs -p) 2>/dev/null" SIGTERM SIGINT' >> /start.sh && \
     echo 'mkdir -p /var/log/php-fpm' >> /start.sh && \

@@ -17,14 +17,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 左上ヘッダー三連アイコンのログインボタンでユーザー名を空文字でログアウトできる機能追加
 - open時にfileにpath hashを指定しても開ける機能追加
 - ディレクトリリスティングしてる状態からログインしても元のページに戻ってくるように機能追加
-- 時計の表示/非表示を切り替えるボタンを追加
-- 国際化対応。現在は英語と日本語に対応
+- 時計の表示/非表示を切り替える時計アイコンをTOCメニューに追加
+- 国際化対応。現在は日本語、英語、台湾、香港に対応。ディレクトリリスティングヘッダとリーダーに切替眼入装備
 
 ### 変更
 - unrar path設定項目を削除
 - comistream.phpの引数にsize=FULLを付ける運用を終了して、sessionやcookieから自動判定されるように変更
 - セッションの有効期限を31日に設定
 - インスペクター表示のページ番号を「現在ページ/最終ページ」スタイルに変更
+- findコマンドの代わりにfdコマンドが入っていればそっちを利用するように変更、Dockerfileにはfdを追加インストール
+- Dockerfileの/etc/mime.typesのflacのMIMEをaudio/x-flacからaudio/flacに変更、htaccessも更新
+- pdfファイルを開くときに総ページ数取得にpdfinfoコマンドを利用するように
 
 ### 修正
 - Dockerfileにunrar追加
@@ -34,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 未使用global変数宣言を多少整理
 - iOS/Androidデバイスで長押しでクイック見開き表示にしたとき、解除してもすぐに戻らない不具合修正
 - タッチパネルデバイスではhoverに反応しないように抑制
+- SynologyのNASでコンテナが起動するように修正 [#11](https://github.com/sorshi/comistream-reader/issues/11)
 
 ### 削除
 - なし

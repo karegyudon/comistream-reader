@@ -16,11 +16,13 @@
 class I18n
 {
     private static $instance = null;
-    private $lang = 'ja'; // デフォルト言語
+    private $lang = 'en'; // デフォルト言語
     private $translations = [];
     private $availableLangs = [
         'ja' => '日本語',
-        'en' => 'English'
+        'en' => 'English',
+        'zh_TW' => '繁體中文（台灣）',
+        'zh_HK' => '繁體中文（香港）'
     ];
 
     /**
@@ -78,6 +80,19 @@ class I18n
                     $this->lang = 'en';
                     error_log("ブラウザ言語から言語設定: " . $this->lang);
                     return;
+                } elseif ($langCode === 'zh') {
+                    // 中国語の場合、詳細な地域コードを確認
+                    $fullLangCode = substr($browserLang, 0, 5);
+                    if (strpos($fullLangCode, 'zh-TW') === 0) {
+                        $this->lang = 'zh_TW';
+                        error_log("ブラウザ言語から言語設定(台湾): " . $this->lang);
+                        return;
+                    } elseif (strpos($fullLangCode, 'zh-HK') === 0) {
+                        $this->lang = 'zh_HK';
+                        error_log("ブラウザ言語から言語設定(香港): " . $this->lang);
+                        return;
+                    }
+                    // 中国語だが地域が特定できない場合は英語をデフォルトとする
                 }
             }
         } else {
@@ -96,7 +111,9 @@ class I18n
         // 短縮形から詳細形へのマッピング
         $langMap = [
             'ja' => 'ja_JP',
-            'en' => 'en_US'
+            'en' => 'en_US',
+            'zh_TW' => 'zh_TW',
+            'zh_HK' => 'zh_HK'
         ];
         
         $mappedLang = isset($langMap[$this->lang]) ? $langMap[$this->lang] : $this->lang;

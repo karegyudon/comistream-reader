@@ -1219,10 +1219,11 @@ function printHTML()
 $contents_css
 
 --></style>
-<link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.14.0/themes/smoothness/jquery-ui.css">
+<link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.14.1/themes/smoothness/jquery-ui.css">
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.14.0/jquery-ui.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.14.1/jquery-ui.min.js"></script>
 <script src="$themeDir/theme/js/long-press-event.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.2/feather.min.js"></script>
 <script>
 <!--
     // PHPの設定に基づいてJavaScriptのデバッグフラグを設定
@@ -1276,6 +1277,10 @@ $contents_css
     // 言語切り替え用JavaScript
     $langSwitcherJs
 
+    // DOMが読み込まれた後にfeather.replace()を呼び出す
+    document.addEventListener('DOMContentLoaded', function() {
+        feather.replace();
+    });
 //-->
 </script>
 
@@ -1317,7 +1322,8 @@ $contents_css
         <span class="button button-mode" id="direction" onclick="toggleDirection()">{$i18n->get('direction')}</span>
         <span class="button button-mode" id="fullScreenButton" onclick="toggleFullScreen()">{$i18n->get('fullscreen')}</span>
         <span class="$split_button_class button-mode" id="splitFile" onclick="toggleTrimmingFile()">$split_button_text</span>
-        $langSelectorHtml<span class="button button-mode" id="clockToggleButton" onclick="toggleClock()">{$i18n->get('clock')}</span>
+        $langSelectorHtml
+        <span class="clock-icon-button" id="clockToggleButton" onclick="toggleClock()"><i data-feather="clock"></i></span>
     </div>
     <div style="clear:both;">
         <div class="bookName">$bookName</div>
@@ -1816,13 +1822,27 @@ function openPdf()
     }
 
     // ページ数取得/ページリスト作成
-    $maxPage = shell_exec("$cpdf -pages -i \"$cacheDir/$file/file\"");
-    $maxPage = trim($maxPage);
-    writelog("DEBUG openPdf() $cpdf -pages -i \"$cacheDir/$file/file\"");
-    // TODO pdfinfoで書き換えられないか検討
-    // $pdfinfo = $conf["pdfinfo"];
-    // $maxPage = shell_exec("$pdfinfo \"$cacheDir/$file/file\" | grep Pages | awk '{print $2}'");
-    // writelog("DEBUG openPdf() $pdfinfo \"$cacheDir/$file/file\":".$$maxPage);
+    writelog("DEBUG openPdf() START pdfinfo ");
+    $pdfinfo = $conf["pdfinfo"];
+    if (empty($pdfinfo) || !is_executable($pdfinfo)) {
+        writelog("DEBUG openPdf() pdfinfo is not available;retry with cpdf");
+        $maxPage = shell_exec("$cpdf -pages -i \"$cacheDir/$file/file\"");
+        $maxPage = trim($maxPage);
+        writelog("DEBUG openPdf() COMPLETE $cpdf -pages -i \"$cacheDir/$file/file\" maxPage:" . $maxPage);
+    } else {
+        writelog("DEBUG openPdf() file path of pdfinfo:" . $pdfinfo);
+        $maxPage = shell_exec("$pdfinfo \"$cacheDir/$file/file\" | grep Pages | awk '{print $2}'");
+        $maxPage = trim($maxPage);
+        writelog("DEBUG openPdf() $pdfinfo \"$cacheDir/$file/file\":" . $maxPage);
+        if ((is_numeric($maxPage)) && ($maxPage >= 1)) {
+            writelog("DEBUG openPdf() maxPage:" . $maxPage);
+        } else {
+            writelog("DEBUG openPdf() pdfinfo failed;retry with cpdf");
+            $maxPage = shell_exec("$cpdf -pages -i \"$cacheDir/$file/file\"");
+            $maxPage = trim($maxPage);
+            writelog("DEBUG openPdf() COMPLETE $cpdf -pages -i \"$cacheDir/$file/file\" maxPage:" . $maxPage);
+        }
+    }
     shell_exec("seq -f \"p%g_.jpg\" $maxPage > \"$cacheDir/$file/index\"");
 
     // 目次を作成
