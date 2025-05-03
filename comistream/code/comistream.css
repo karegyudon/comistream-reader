@@ -419,3 +419,18 @@ input[type="range"]::-moz-range-thumb {
 .lang-option:hover {
   background-color: rgba(80, 80, 80, 0.8);
 }
+/* 時計アイコンボタン用のスタイル */
+.clock-icon-button {
+  cursor: pointer; /* クリック可能なカーソル */
+  display: inline-block; /* 他の要素と並べる */
+  vertical-align: middle; /* 他のボタンと縦位置を合わせる */
+  margin-left: 5px; /* 左側のマージン */
+  padding: 3px; /* アイコン周りの余白を小さく */
+  line-height: 1; /* 行の高さをアイコンに合わせる */
+}
+
+.clock-icon-button svg {
+  width: 18px; /* アイコンの幅 */
+  height: 18px; /* アイコンの高さ */
+  stroke: #fff; /* アイコンの色 */
+}
