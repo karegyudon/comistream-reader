@@ -41,7 +41,8 @@ RUN dnf update -y &&  \
     tar -xzvf /tmp/comistream.tar.gz -C /home/user/comistream --strip-components=1 && \
     rm /tmp/comistream.tar.gz && \
     mkdir -p /home/user/comistream/data && \
-    chgrp -R apache /home/user/comistream/data/ && \
+    # chgrp -R apache /home/user/comistream/data/ && \
+    chown -R apache:apache /home/user/comistream/data/ && \
     chmod -R 775 /home/user/comistream/data/ && \
     chmod 775 /home/user && chgrp apache /home/user && \
     ln -s /home/user/comistream/code/comistream.php /var/www/cgi-bin/ && \
@@ -63,6 +64,19 @@ RUN dnf update -y &&  \
     chmod 755 /run/php-fpm && \
     mkdir -p /var/cache/fontconfig && \
     chmod 777 /var/cache/fontconfig && \
+
+    # PHP-FPMの設定を変更(from [#11])
+    sed -i "s|listen = /run/php-fpm/www.sock|listen = 9000|g" /etc/php-fpm.d/www.conf && \
+    sed -i "s|^listen.acl_users|;listen.acl_users|g" /etc/php-fpm.d/www.conf && \
+    sed -i "s|^listen.acl_groups|;listen.acl_groups|g" /etc/php-fpm.d/www.conf && \
+
+    # Apacheの設定を変更(from [#11])
+    sed -i "s#proxy:unix:/run/php-fpm/www.sock|fcgi://localhost#proxy:fcgi://localhost:9000#g" /etc/httpd/conf.d/php.conf && \
+
+    # 権限変更(from [#11])上でやっている
+    # chown -R apache:apache /home/user/comistream/data && \
+    # chmod -R 755 /home/user/comistream/data && \
+
     echo '#!/bin/bash' > /start.sh && \
     echo 'trap "echo Shutting down...; kill -TERM \$(jobs -p) 2>/dev/null" SIGTERM SIGINT' >> /start.sh && \
     echo 'mkdir -p /var/log/php-fpm' >> /start.sh && \
