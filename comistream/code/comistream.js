@@ -547,6 +547,7 @@ function next() {
         autoLightSplitModeViewPosition = "right";
       }
     } else {
+      // 最終ページに到達した場合の処理
       debugLog(
         "next(); current page:" +
           page +
@@ -555,11 +556,24 @@ function next() {
           " mode:" +
           mode
       );
-      $("#suggest").dialog({
-        width: "auto",
-        height: "auto",
-        title: "Next Book",
-      });
+      // jQuery UI Dialogの代替: suggest要素を表示する
+      const suggestElement = document.getElementById("suggest");
+      const overlayElement = document.getElementById("overlay"); // 既存のオーバーレイを使用
+      if (suggestElement && overlayElement) {
+        // CSSでスタイルが定義されている前提で、表示を切り替えるだけにするルン！
+        overlayElement.style.display = "block";
+        suggestElement.style.display = "block";
+
+        // 外側クリックで閉じるイベントリスナー
+        overlayElement.onclick = () => {
+          suggestElement.style.display = "none";
+          overlayElement.style.display = "none";
+          // クリックイベントをリセット
+          overlayElement.onclick = null;
+        };
+      } else {
+        debugLog("Suggest or Overlay element not found!"); // 見つからなかった場合のエラーログ
+      }
     }
   }
 }
@@ -659,7 +673,7 @@ async function devicePageSync() {
         }
       }
     } catch (error) {
-      console.error(`Could not get products: {$error}`);
+      console.error(`Could not get products: ${error}`);
     }
   }
 }
@@ -1203,8 +1217,61 @@ function toggleTrimmingFile() {
 }
 
 //読み終えたときに続刊、関連書籍を表示するためのデータを取得
-function sugguestbook() {
-  debugLog("sugguestbook(); start ajax");
+async function sugguestbook() {
+  debugLog("sugguestbook(); start fetch");
+  const suggestElement = document.getElementById("suggest");
+  if (!suggestElement) {
+    debugLog("sugguestbook(); suggest element not found");
+    return;
+  }
+  // 既存の内容をクリア (もし必要なら)
+  // suggestElement.innerHTML = '';
+
+  try {
+    const response = await fetch(
+      `/suggest.php?booktitle=${encodeURIComponent(baseFile)}`,
+      {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    // 新しい巻
+    Object.keys(data.title.new).forEach(function (key) {
+      addnextbooklist(key, data.title.new[key]);
+    });
+
+    // 現在読んでいる本
+    const currentBookHtml = `<p><img src="${themeDir}/theme/icons/book.png" /><b>${baseFile}</b><span style="color:#5674b9">　now reading</span></p>`;
+    suggestElement.insertAdjacentHTML("beforeend", currentBookHtml);
+
+    // 古い巻
+    Object.keys(data.title.old).forEach(function (key) {
+      addnextbooklist(key, data.title.old[key]);
+    });
+
+    // 同じ作者の本
+    Object.keys(data.author).forEach(function (key) {
+      addnextbooklist(key, data.author[key]);
+    });
+
+  } catch (error) {
+    debugLog("Fetch errored: " + error);
+    const errorHtml = `<p><img src="${themeDir}/theme/icons/book.png" /><b>${baseFile}</b><span style="color:red">　no suggest</span></p>`;
+    if (suggestElement) {
+      suggestElement.insertAdjacentHTML("beforeend", errorHtml);
+    }
+  }
+
+  /* 元の$.ajaxコード
   $.ajax({
     type: "GET",
     url: "/suggest.php",
@@ -1244,6 +1311,7 @@ function sugguestbook() {
           '</b><span style="color:red">　no suggest</span></p>'
       );
     });
+  */
 }
 
 //続刊へ移動
@@ -1256,8 +1324,10 @@ function addnextbooklist(nexttitle, nextlocation) {
   let shareroot = publicDir;
   let sizeOption = "";
   // let nowlocation = location.href;
-  if (document.getElementById("rawMode").classList.contains("raw")) {
-    // sizeOption = "&size=FULL";
+  // rawModeの状態に応じてsizeOptionを設定するロジックは元のまま
+  const rawModeElement = document.getElementById("rawMode");
+  if (rawModeElement && rawModeElement.classList.contains("raw")) {
+    // sizeOption = "&size=FULL"; // sizeパラメータは不要になった可能性あり
   } else {
     // sizeOption = "";
   }
@@ -1275,11 +1345,15 @@ function addnextbooklist(nexttitle, nextlocation) {
     encodeOpenFilePath +
     "&mode=open" +
     sizeOption +
-    "')\">" +
+    "\')\">" +
     nexttitle +
     "</a></p>";
   debugLog("addnextbooklist(); nexttag:" + nexttag);
-  $("#suggest").append(nexttag);
+  // $("#suggest").append(nexttag);
+  const suggestElement = document.getElementById("suggest");
+  if (suggestElement) {
+    suggestElement.insertAdjacentHTML("beforeend", nexttag);
+  }
 }
 
 async function isLandscape(checkdivid) {

@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - iOS/Androidデバイスで長押しでクイック見開き表示にしたとき、解除してもすぐに戻らない不具合修正
 - タッチパネルデバイスではhoverに反応しないように抑制
 - SynologyのNASでコンテナが起動するように修正 [#11](https://github.com/sorshi/comistream-reader/issues/11)
+- jQuery依存箇所を書き直した
 
 ### 削除
 - なし

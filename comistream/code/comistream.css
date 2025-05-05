@@ -434,3 +434,52 @@ input[type="range"]::-moz-range-thumb {
   height: 18px; /* アイコンの高さ */
   stroke: #fff; /* アイコンの色 */
 }
+
+/* 続刊・関連書籍表示用のスタイル */
+#suggest {
+  display: none; /* 初期状態は非表示 */
+  position: fixed; /* 画面に固定 */
+  z-index: 2; /* オーバーレイより手前 */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); /* 上下左右中央揃え */
+  min-width: 300px; /* 最小幅 */
+  max-width: 70%; /* 最大幅 */
+  max-height: 80%; /* 最大高さ */
+  background-color: rgba(0, 0, 0, 0.67); /* 背景色 (contentsに合わせる) */
+  color: white; /* 文字色 */
+  padding: 20px; /* 内側の余白 */
+  border-radius: 20px; /* 角丸 (contentsに合わせる) */
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5); /* 影をつける */
+  overflow: auto; /* 内容が多い場合にスクロール */
+  -webkit-overflow-scrolling: touch; /* iOSでのスムーズスクロール */
+}
+
+#suggest p {
+  margin: 0.8em 0; /* 段落間の余白 */
+}
+
+#suggest img {
+  vertical-align: middle; /* 画像とテキストの縦位置を合わせる */
+  margin-right: 8px; /* 画像の右側の余白 */
+  width: 16px; /* アイコンサイズ調整 (必要なら) */
+  height: 16px; /* アイコンサイズ調整 (必要なら) */
+}
+
+#suggest a {
+  color: #a9d1ff; /* リンクの色 */
+  text-decoration: none;
+}
+
+#suggest a:hover {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+/* タッチデバイス向けのhover効果無効化 */
+@media (hover: none) {
+  #suggest a:hover {
+    text-decoration: none;
+    color: #a9d1ff; /* ホバー色を通常色と同じにする */
+  }
+}
