@@ -136,34 +136,34 @@ class PreCache {
 
   // ネットワーク帯域の測定(旧仕様 もう未使用なはず)
   measureNetworkSpeed() {
-    const startTime = Date.now();
-    fetch("/theme/bench/80KB.dat", {
-      method: "GET",
-      cache: "no-store",
-    }).then(() => {
-      const endTime = Date.now();
-      const duration = endTime - startTime;
-      if (duration > 0) {
-        this.networkSpeed = 100 / duration; // 非常に単純な帯域計測
-        this.networkSpeedKBps = (80 * 1024 * 8) / duration; // 80KBのファイル転送してるから
-        debugLog(
-          "measureNetworkSpeed() " +
-            this.networkSpeed +
-            " startTime:" +
-            startTime +
-            " endTime:" +
-            endTime +
-            " duration:" +
-            duration +
-            "msec bandwidth:" +
-            this.networkSpeedKBps +
-            "Kbps"
-        );
-      } else {
-        debugLog("measureNetworkSpeed() duration is 0");
-      }
-      this.adjustPreloadPages();
-    });
+    // const startTime = Date.now();
+    // fetch("/theme/bench/80KB.dat", {
+    //   method: "GET",
+    //   cache: "no-store",
+    // }).then(() => {
+    //   const endTime = Date.now();
+    //   const duration = endTime - startTime;
+    //   if (duration > 0) {
+    //     this.networkSpeed = 100 / duration; // 非常に単純な帯域計測
+    //     this.networkSpeedKBps = (80 * 1024 * 8) / duration; // 80KBのファイル転送してるから
+    //     debugLog(
+    //       "measureNetworkSpeed() " +
+    //         this.networkSpeed +
+    //         " startTime:" +
+    //         startTime +
+    //         " endTime:" +
+    //         endTime +
+    //         " duration:" +
+    //         duration +
+    //         "msec bandwidth:" +
+    //         this.networkSpeedKBps +
+    //         "Kbps"
+    //     );
+    //   } else {
+    //     debugLog("measureNetworkSpeed() duration is 0");
+    //   }
+    //   this.adjustPreloadPages();
+    // });
   }
 
   // 先読みページ数の調整
@@ -210,6 +210,14 @@ class PreCache {
         " pages. networkSpeedKBps:" +
         this.networkSpeedKBps
     );
+    // 平均ページサイズが大きい場合は先読み数を増やすルン！
+    if (typeof averagePageKBytes !== 'undefined' && averagePageKBytes >= 1000) {
+      // 1000KB（約1MB）以上の大きなページサイズの場合は1.5倍にするルン
+      this.size = Math.floor(this.size * 1.5);
+      debugLog("Large page size detected! Increasing preload pages to " + this.size + " pages");
+    }
+
+
   }
 }
 
