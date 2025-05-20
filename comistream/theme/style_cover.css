@@ -261,7 +261,7 @@ td.indexcolname {
 }
 .indexcolname a[href$="/"] {
   color: #444;
-  background: url("icons/largefolder.png") center no-repeat;
+  background: url("icons/largefolderx1.webp") center no-repeat;
 }
 td.indexcollastmod {
   display: none;

@@ -45,5 +45,6 @@
   <policy domain="coder" rights="read|write" pattern="PPM" />
   <policy domain="coder" rights="read|write" pattern="AI" />
   <policy domain="coder" rights="read|write" pattern="PSD" />
+  <policy domain="coder" rights="read|write" pattern="XC" />
 
 </policymap>
