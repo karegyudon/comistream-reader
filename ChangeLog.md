@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - findコマンドの代わりにfdコマンドが入っていればそっちを利用するように変更、Dockerfileにはfdを追加インストール
 - Dockerfileの/etc/mime.typesのflacのMIMEをaudio/x-flacからaudio/flacに変更、htaccessも更新
 - pdfファイルを開くときに総ページ数取得にpdfinfoコマンドを利用するように
+- ページサイズが1MBを超える画像は先読み枚数を1.5倍に増やした
 
 ### 修正
 - Dockerfileにunrar追加
@@ -39,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - タッチパネルデバイスではhoverに反応しないように抑制
 - SynologyのNASでコンテナが起動するように修正 [#11](https://github.com/sorshi/comistream-reader/issues/11)
 - jQuery依存箇所を書き直した
+- Dockerfileのdnf不具合修正
 
 ### 削除
 - なし
