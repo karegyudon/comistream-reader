@@ -438,16 +438,16 @@ for (var i = 2; i < colname.length; i++ ) {
 
     // === ディレクトリのカスタムアイコン処理 ===
     // href属性からパスを組み立てるルン！
-    var fullHref = elm.href; // elm は <a> タグです
-    var pathAfterPublicDir = "";
-    var publicDirWithSlash = publicDir + "/";
+    let fullHref = elm.href; // elm は <a> タグです
+    let pathAfterPublicDir = "";
+    let publicDirWithSlash = publicDir + "/";
 
     if (publicDir !== "" && fullHref.includes(publicDirWithSlash)) {
       pathAfterPublicDir = fullHref.substring(fullHref.indexOf(publicDirWithSlash) + publicDirWithSlash.length);
     } else {
       // publicDir が空か、含まれていない場合は、URLのパス部分から取得するルン
       try {
-        var urlObj = new URL(fullHref);
+        let urlObj = new URL(fullHref);
         pathAfterPublicDir = urlObj.pathname;
         if (pathAfterPublicDir.startsWith("/")) {
           pathAfterPublicDir = pathAfterPublicDir.substring(1);
@@ -470,11 +470,11 @@ for (var i = 2; i < colname.length; i++ ) {
       pathAfterPublicDir += "/";
     }
 
-    var parts = pathAfterPublicDir.split('/');
+    let parts = pathAfterPublicDir.split('/');
     // 最後の要素はファイル名index.webpになるので、それはエンコードしないようにするルン！
     // ディレクトリのパス部分だけエンコードするルン！ 二重エンコードとシングルクォートも考慮するルン！
-    var encodedParts = parts.slice(0, -1).map(function(part) {
-      var decodedPart;
+    let encodedParts = parts.slice(0, -1).map(function(part) {
+      let decodedPart;
       try {
         // まずデコードしてみるルン
         decodedPart = decodeURIComponent(part);
@@ -484,26 +484,26 @@ for (var i = 2; i < colname.length; i++ ) {
         decodedPart = part;
       }
       // それからエンコードして、シングルクォートも '%27' に置換するルン！
-      return encodeURIComponent(decodedPart).replace(/'/g, '%27');
+      return encodeURIComponent(decodedPart).replace(/\'/g, '%27');
     });
 
     // 末尾が空の要素（元々末尾が/だった名残）で終わっていれば、それは維持する
-    var relativeDirPath = encodedParts.join('/');
+    let relativeDirPath = encodedParts.join('/');
     if (pathAfterPublicDir.endsWith("/") && parts.length > 1) { // ルート直下でないディレクトリの場合
         relativeDirPath += "/";
     }
 
-    var dirCustomIconUrl = imgPath + relativeDirPath + "index.webp";
+    let dirCustomIconUrl = imgPath + relativeDirPath + "index.webp";
     // console.log("[Comistream Debug] 生成された dirCustomIconUrl: " + dirCustomIconUrl + ", 元のhref: " + elm.href + ", 抽出パス: " + pathAfterPublicDir);
 
-    var currentCSS = document.getElementsByTagName("link")[0].href;
-    var isCoverView = currentCSS.includes("style_cover.css");
+    let currentCSS = document.getElementsByTagName("link")[0].href;
+    let isCoverView = currentCSS.includes("style_cover.css");
 
     if (isCoverView) {
       // カバービューの場合: <a> タグの背景画像を変更
       // クロージャ問題を解決するために即時実行関数 (IIFE) を使用
       (function(currentLinkElement, currentDirCustomIconUrlToLoad) {
-        var tempImgForDir = new Image();
+        let tempImgForDir = new Image();
         // ★デバッグ用ログ
         // console.log("[Comistream Debug] チェック開始: " + currentDirCustomIconUrlToLoad + " 対象要素: ", currentLinkElement);
 
