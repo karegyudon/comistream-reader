@@ -297,14 +297,133 @@ function login(){
   }
 }
 
+// ディレクトリのカスタムアイコンを設定する関数
+function applyDirectoryCustomIcons(){
+  const colname = document.getElementsByClassName("indexcolname");
+  const imgPath = location.origin+themeDir+"/theme/covers/";
+  
+  for (let i = 2; i < colname.length; i++) {
+    const elm = colname[i].firstChild;
+    
+    if (elm && elm.href && elm.href.match(/\/$/)) {
+      // ディレクトリの場合のみ処理
+      
+      // href属性からパスを組み立てるルン！
+      let fullHref = elm.href;
+      let pathAfterPublicDir = "";
+      let publicDirWithSlash = publicDir + "/";
+
+      if (publicDir !== "" && fullHref.includes(publicDirWithSlash)) {
+        pathAfterPublicDir = fullHref.substring(fullHref.indexOf(publicDirWithSlash) + publicDirWithSlash.length);
+      } else {
+        // publicDir が空か、含まれていない場合は、URLのパス部分から取得するルン
+        try {
+          let urlObj = new URL(fullHref);
+          pathAfterPublicDir = urlObj.pathname;
+          if (pathAfterPublicDir.startsWith("/")) {
+            pathAfterPublicDir = pathAfterPublicDir.substring(1);
+          }
+        } catch (e) {
+          // URLの解析に失敗した場合は、hrefからドメイン部分を除去する感じでいくルン
+          pathAfterPublicDir = fullHref.replace(location.origin, "");
+          if (pathAfterPublicDir.startsWith("/")) {
+            pathAfterPublicDir = pathAfterPublicDir.substring(1);
+          }
+          // それでも publicDir が先頭にある可能性があるので再度チェック
+          if (publicDir !== "" && pathAfterPublicDir.startsWith(publicDirWithSlash)) {
+              pathAfterPublicDir = pathAfterPublicDir.substring(publicDirWithSlash.length);
+          }
+        }
+      }
+
+      // 最後のスラッシュはエンコード前に保証するルン！
+      if (!pathAfterPublicDir.endsWith("/")) {
+        pathAfterPublicDir += "/";
+      }
+
+      let parts = pathAfterPublicDir.split('/');
+      // 最後の要素はファイル名index.webpになるので、それはエンコードしないようにするルン！
+      // ディレクトリのパス部分だけエンコードするルン！ 二重エンコードとシングルクォートも考慮するルン！
+      let encodedParts = parts.slice(0, -1).map(function(part) {
+        let decodedPart;
+        try {
+          // まずデコードしてみるルン
+          decodedPart = decodeURIComponent(part);
+        } catch (e) {
+          // デコードに失敗したら、元のままでいくルン
+          // (例: '%'単独など、不正なエンコードシーケンスの場合)
+          decodedPart = part;
+        }
+        // それからエンコードして、シングルクォートも '%27' に置換するルン！
+        return encodeURIComponent(decodedPart).replace(/\'/g, '%27');
+      });
+
+      // 末尾が空の要素（元々末尾が/だった名残）で終わっていれば、それは維持する
+      let relativeDirPath = encodedParts.join('/');
+      if (pathAfterPublicDir.endsWith("/") && parts.length > 1) { // ルート直下でないディレクトリの場合
+          relativeDirPath += "/";
+      }
+
+      let dirCustomIconUrl = imgPath + relativeDirPath + "index.webp";
+
+      // クロージャ問題を解決するために即時実行関数 (IIFE) を使用
+      (function(currentLinkElement, currentDirCustomIconUrlToLoad) {
+        let tempImgForDir = new Image();
+
+        tempImgForDir.onload = function() {
+          // ディレクトリアイコンサイズは560x656であることが必須
+          // なぜか404画像がstatus 200で返ってきてしまうのでディレクトリアイコンかの判定はサイズでやっている
+          if (this.width === 560 && this.height === 656) {
+            currentLinkElement.style.backgroundImage = "url('" + currentDirCustomIconUrlToLoad + "')";
+            currentLinkElement.style.backgroundSize = "cover";
+            currentLinkElement.style.backgroundPosition = "center center";
+            currentLinkElement.style.backgroundRepeat = "no-repeat";
+          } else {
+            currentLinkElement.style.removeProperty('background-image');
+            currentLinkElement.style.removeProperty('background-size');
+            currentLinkElement.style.removeProperty('background-position');
+            currentLinkElement.style.removeProperty('background-repeat');
+          }
+        };
+        tempImgForDir.onerror = function() {
+          currentLinkElement.style.removeProperty('background-image');
+          currentLinkElement.style.removeProperty('background-size');
+          currentLinkElement.style.removeProperty('background-position');
+          currentLinkElement.style.removeProperty('background-repeat');
+        };
+        tempImgForDir.src = currentDirCustomIconUrlToLoad;
+      })(elm, dirCustomIconUrl);
+    }
+  }
+}
+
 // リスト・カバービューの切り替え
 function toggleView(){
   if( document.getElementsByTagName("link")[0].href.match(/style\.css/)) {
     document.cookie = "viewmode=cover; path=/; max-age=31536000;";
     document.getElementsByTagName("link")[0].href = themeDir+"/theme/style_cover.css?2025040101";
+    // Cover Viewに切り替えた時にディレクトリのカスタムアイコンを適用するルン！
+    setTimeout(applyDirectoryCustomIcons, 100);
   }else{
+    // CoverViewからListViewに切り替える場合、ディレクトリのカスタム背景画像をクリア
+    clearDirectoryCustomBackgrounds();
     document.cookie = "viewmode=list; path=/; max-age=31536000;";
     document.getElementsByTagName("link")[0].href = themeDir+"/theme/style.css?2025040100";
+  }
+}
+
+// ディレクトリのカスタム背景画像をクリアする関数
+function clearDirectoryCustomBackgrounds(){
+  const colname = document.getElementsByClassName("indexcolname");
+  for (let i = 0; i < colname.length; i++) {
+    const elm = colname[i].firstChild;
+    if (elm && elm.href && elm.href.match(/\/$/)) {
+      // ディレクトリの場合、カスタム背景画像スタイルをクリア
+      elm.style.removeProperty('background-image');
+      elm.style.removeProperty('background-size');
+      elm.style.removeProperty('background-position');
+      elm.style.removeProperty('background-repeat');
+    }
   }
 }
 
@@ -437,91 +556,82 @@ for (var i = 2; i < colname.length; i++ ) {
     }
 
     // === ディレクトリのカスタムアイコン処理 ===
-    // href属性からパスを組み立てるルン！
-    let fullHref = elm.href; // elm は <a> タグです
-    let pathAfterPublicDir = "";
-    let publicDirWithSlash = publicDir + "/";
-
-    if (publicDir !== "" && fullHref.includes(publicDirWithSlash)) {
-      pathAfterPublicDir = fullHref.substring(fullHref.indexOf(publicDirWithSlash) + publicDirWithSlash.length);
-    } else {
-      // publicDir が空か、含まれていない場合は、URLのパス部分から取得するルン
-      try {
-        let urlObj = new URL(fullHref);
-        pathAfterPublicDir = urlObj.pathname;
-        if (pathAfterPublicDir.startsWith("/")) {
-          pathAfterPublicDir = pathAfterPublicDir.substring(1);
-        }
-      } catch (e) {
-        // URLの解析に失敗した場合は、hrefからドメイン部分を除去する感じでいくルン
-        pathAfterPublicDir = fullHref.replace(location.origin, "");
-        if (pathAfterPublicDir.startsWith("/")) {
-          pathAfterPublicDir = pathAfterPublicDir.substring(1);
-        }
-        // それでも publicDir が先頭にある可能性があるので再度チェック
-        if (publicDir !== "" && pathAfterPublicDir.startsWith(publicDirWithSlash)) {
-            pathAfterPublicDir = pathAfterPublicDir.substring(publicDirWithSlash.length);
-        }
-      }
-    }
-
-    // 最後のスラッシュはエンコード前に保証するルン！
-    if (!pathAfterPublicDir.endsWith("/")) {
-      pathAfterPublicDir += "/";
-    }
-
-    let parts = pathAfterPublicDir.split('/');
-    // 最後の要素はファイル名index.webpになるので、それはエンコードしないようにするルン！
-    // ディレクトリのパス部分だけエンコードするルン！ 二重エンコードとシングルクォートも考慮するルン！
-    let encodedParts = parts.slice(0, -1).map(function(part) {
-      let decodedPart;
-      try {
-        // まずデコードしてみるルン
-        decodedPart = decodeURIComponent(part);
-      } catch (e) {
-        // デコードに失敗したら、元のままでいくルン
-        // (例: '%'単独など、不正なエンコードシーケンスの場合)
-        decodedPart = part;
-      }
-      // それからエンコードして、シングルクォートも '%27' に置換するルン！
-      return encodeURIComponent(decodedPart).replace(/\'/g, '%27');
-    });
-
-    // 末尾が空の要素（元々末尾が/だった名残）で終わっていれば、それは維持する
-    let relativeDirPath = encodedParts.join('/');
-    if (pathAfterPublicDir.endsWith("/") && parts.length > 1) { // ルート直下でないディレクトリの場合
-        relativeDirPath += "/";
-    }
-
-    let dirCustomIconUrl = imgPath + relativeDirPath + "index.webp";
-    // console.log("[Comistream Debug] 生成された dirCustomIconUrl: " + dirCustomIconUrl + ", 元のhref: " + elm.href + ", 抽出パス: " + pathAfterPublicDir);
-
+    // カバービューの場合のみディレクトリのカスタムアイコンを設定するルン！
     let currentCSS = document.getElementsByTagName("link")[0].href;
     let isCoverView = currentCSS.includes("style_cover.css");
-
+    // 初期読み込み時にカバービューの場合のみ、個別にディレクトリアイコンを設定
     if (isCoverView) {
-      // カバービューの場合: <a> タグの背景画像を変更
+      // href属性からパスを組み立てるルン！
+      let fullHref = elm.href;
+      let pathAfterPublicDir = "";
+      let publicDirWithSlash = publicDir + "/";
+
+      if (publicDir !== "" && fullHref.includes(publicDirWithSlash)) {
+        pathAfterPublicDir = fullHref.substring(fullHref.indexOf(publicDirWithSlash) + publicDirWithSlash.length);
+      } else {
+        // publicDir が空か、含まれていない場合は、URLのパス部分から取得するルン
+        try {
+          let urlObj = new URL(fullHref);
+          pathAfterPublicDir = urlObj.pathname;
+          if (pathAfterPublicDir.startsWith("/")) {
+            pathAfterPublicDir = pathAfterPublicDir.substring(1);
+          }
+        } catch (e) {
+          // URLの解析に失敗した場合は、hrefからドメイン部分を除去する感じでいくルン
+          pathAfterPublicDir = fullHref.replace(location.origin, "");
+          if (pathAfterPublicDir.startsWith("/")) {
+            pathAfterPublicDir = pathAfterPublicDir.substring(1);
+          }
+          // それでも publicDir が先頭にある可能性があるので再度チェック
+          if (publicDir !== "" && pathAfterPublicDir.startsWith(publicDirWithSlash)) {
+              pathAfterPublicDir = pathAfterPublicDir.substring(publicDirWithSlash.length);
+          }
+        }
+      }
+
+      // 最後のスラッシュはエンコード前に保証するルン！
+      if (!pathAfterPublicDir.endsWith("/")) {
+        pathAfterPublicDir += "/";
+      }
+
+      let parts = pathAfterPublicDir.split('/');
+      // 最後の要素はファイル名index.webpになるので、それはエンコードしないようにするルン！
+      // ディレクトリのパス部分だけエンコードするルン！ 二重エンコードとシングルクォートも考慮するルン！
+      let encodedParts = parts.slice(0, -1).map(function(part) {
+        let decodedPart;
+        try {
+          // まずデコードしてみるルン
+          decodedPart = decodeURIComponent(part);
+        } catch (e) {
+          // デコードに失敗したら、元のままでいくルン
+          // (例: '%'単独など、不正なエンコードシーケンスの場合)
+          decodedPart = part;
+        }
+        // それからエンコードして、シングルクォートも '%27' に置換するルン！
+        return encodeURIComponent(decodedPart).replace(/\'/g, '%27');
+      });
+
+      // 末尾が空の要素（元々末尾が/だった名残）で終わっていれば、それは維持する
+      let relativeDirPath = encodedParts.join('/');
+      if (pathAfterPublicDir.endsWith("/") && parts.length > 1) { // ルート直下でないディレクトリの場合
+          relativeDirPath += "/";
+      }
+
+      let dirCustomIconUrl = imgPath + relativeDirPath + "index.webp";
+
       // クロージャ問題を解決するために即時実行関数 (IIFE) を使用
       (function(currentLinkElement, currentDirCustomIconUrlToLoad) {
         let tempImgForDir = new Image();
-        // ★デバッグ用ログ
-        // console.log("[Comistream Debug] チェック開始: " + currentDirCustomIconUrlToLoad + " 対象要素: ", currentLinkElement);
 
         tempImgForDir.onload = function() {
-          // ★デバッグ用ログをコメントアウト解除して、成功したか見るルン！
-          // console.log("[Comistream Debug] onload 呼ばれた: " + this.src +
-          //             " (期待したのは: " + currentDirCustomIconUrlToLoad + ") " +
-          //             "Actual dimensions: " + this.width + "x" + this.height);
-
           // ディレクトリアイコンサイズは560x656であることが必須
           // なぜか404画像がstatus 200で返ってきてしまうのでディレクトリアイコンかの判定はサイズでやっている
           if (this.width === 560 && this.height === 656) {
-            currentLinkElement.style.backgroundImage = "url('" + currentDirCustomIconUrlToLoad + "')"; // currentDirCustomIconUrlToLoad を使うルン！
+            currentLinkElement.style.backgroundImage = "url('" + currentDirCustomIconUrlToLoad + "')";
             currentLinkElement.style.backgroundSize = "cover";
             currentLinkElement.style.backgroundPosition = "center center";
             currentLinkElement.style.backgroundRepeat = "no-repeat";
           } else {
-            // console.warn("[Comistream Debug] onloadが呼ばれたが、画像の寸法が期待値(560x656)と異なるため背景を設定しません。Actual: " + this.width + "x" + this.height + " for " + currentDirCustomIconUrlToLoad);
             currentLinkElement.style.removeProperty('background-image');
             currentLinkElement.style.removeProperty('background-size');
             currentLinkElement.style.removeProperty('background-position');
@@ -529,15 +639,13 @@ for (var i = 2; i < colname.length; i++ ) {
           }
         };
         tempImgForDir.onerror = function() {
-          // ★デバッグ用ログをコメントアウト解除して、エラーの原因を探るルン！
-          // console.log("[Comistream Debug] onerror 呼ばれた: " + currentDirCustomIconUrlToLoad + " (エンコード前パス候補: " + pathAfterPublicDir + ")");
           currentLinkElement.style.removeProperty('background-image');
           currentLinkElement.style.removeProperty('background-size');
           currentLinkElement.style.removeProperty('background-position');
           currentLinkElement.style.removeProperty('background-repeat');
         };
         tempImgForDir.src = currentDirCustomIconUrlToLoad;
-      })(elm, dirCustomIconUrl); // ループ現在のelmとdirCustomIconUrlをIIFEに渡す
+      })(elm, dirCustomIconUrl);
     }
     // === ディレクトリのカスタムアイコン処理ここまで ===
 
