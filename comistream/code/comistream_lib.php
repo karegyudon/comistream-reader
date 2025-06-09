@@ -81,8 +81,11 @@ function writelog($messages, $processname = 'Comistream')
     if (!empty($writelog_process_name)) {
         $processname = $writelog_process_name;
     }
+    // UTFじゃないときだけ変換
+    if ($messages && !mb_check_encoding($messages, 'UTF-8')) {
+        $messages = mb_convert_encoding($messages, 'UTF-8', ['SJIS-win', 'eucJP-win', 'JIS', 'ASCII']);
+    }
 
-    $messages = mb_convert_encoding($messages, 'UTF-8', 'auto');
     $messages = str_replace(array("\r\n", "\r", "\n"), ' ', $messages);
     openlog($processname, LOG_NDELAY, LOG_USER);
     $bt = debug_backtrace();
