@@ -81,8 +81,11 @@ function writelog($messages, $processname = 'Comistream')
     if (!empty($writelog_process_name)) {
         $processname = $writelog_process_name;
     }
+    // UTFじゃないときだけ変換
+    if ($messages && !mb_check_encoding($messages, 'UTF-8')) {
+        $messages = mb_convert_encoding($messages, 'UTF-8', ['SJIS-win', 'eucJP-win', 'JIS', 'ASCII']);
+    }
 
-    $messages = mb_convert_encoding($messages, 'UTF-8', 'auto');
     $messages = str_replace(array("\r\n", "\r", "\n"), ' ', $messages);
     openlog($processname, LOG_NDELAY, LOG_USER);
     $bt = debug_backtrace();
@@ -1219,9 +1222,6 @@ function printHTML()
 $contents_css
 
 --></style>
-<link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.14.1/themes/smoothness/jquery-ui.css">
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.14.1/jquery-ui.min.js"></script>
 <script src="$themeDir/theme/js/long-press-event.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.2/feather.min.js"></script>
 <script>
@@ -1821,6 +1821,23 @@ function openPdf()
         shell_exec("cd $cacheDir/$file; $cpdf -extract-images -i \"$cacheDir/$file/file\" &>>$traceFile $async");
     }
 
+    // 画像PDFかテキストPDFかの判定フラグ書込
+    $analyzer = new PDFAnalyzer();
+    $result = $analyzer->analyze("$cacheDir/$file/file");
+    if ($result['success']) {
+        $data = $result['data'];
+        // 結果の処理
+        if ($data['is_image_only']) {
+            touch("$cacheDir/$file/IS_IMAGE_PDF");
+            writelog("INFO openPdf() PDF detect:This is an image-only PDF");
+        } else {
+            touch("$cacheDir/$file/TEXT_PDF");
+            writelog("INFO openPdf() PDF detect:This is an text PDF");
+        }
+    } else {
+        writelog("ERROR openPdf() PDF detect failed.:" . $result['error']);
+    }
+
     // ページ数取得/ページリスト作成
     writelog("DEBUG openPdf() START pdfinfo ");
     $pdfinfo = $conf["pdfinfo"];
@@ -1857,22 +1874,6 @@ function openPdf()
         // 目次がなかったら作成
         writelog("DEBUG openPdf() Make static TOC.");
         list($indexArray, $contents) = makeIndex($maxPage);
-    }
-    // 画像PDFかテキストPDFかの判定フラグ書込
-    $analyzer = new PDFAnalyzer();
-    $result = $analyzer->analyze("$cacheDir/$file/file");
-    if ($result['success']) {
-        $data = $result['data'];
-        // 結果の処理
-        if ($data['is_image_only']) {
-            touch("$cacheDir/$file/IS_IMAGE_PDF");
-            writelog("DEBUG openPdf() PDF detect:This is an image-only PDF");
-        } else {
-            touch("$cacheDir/$file/TEXT_PDF");
-            writelog("DEBUG openPdf() PDF detect:This is an text PDF");
-        }
-    } else {
-        writelog("ERROR openPdf() PDF detect failed.:" . $result['error']);
     }
 } //end function openPdf
 
@@ -3544,7 +3545,7 @@ class PDFAnalyzer
      *
      * @param int $minTextChars テキスト判定の最小文字数
      */
-    public function __construct(int $minTextChars = 50)
+    public function __construct(int $minTextChars = 5)
     {
         $this->minTextChars = $minTextChars;
     }
@@ -3587,6 +3588,7 @@ class PDFAnalyzer
             $textContent = $this->extractText($pdfPath);
             $textLength = mb_strlen($textContent);
             $hasTextContent = $textLength > $this->minTextChars;
+            writelog("DEBUG analyze textLength:".$textLength." hasTextContent:".($hasTextContent ? 'true' : 'false'));
 
             // 画像情報の取得
             // JPEG2000のPDFとかでやるとめちゃくちゃ時間かかるので廃止
@@ -3639,13 +3641,14 @@ class PDFAnalyzer
     private function extractText(string $pdfPath, int $page = 1): string
     {
         $command = sprintf(
-            'pdftotext -f %d -l %d %s -',
+            ' pdftotext -f %d -l %d %s -',
             $page,
-            $page,
+            $page+3,
             escapeshellarg($pdfPath)
         );
 
         $output = shell_exec($command);
+        // writelog("INFO analyze:extractText command:".$command);
 
         if ($output === null) {
             throw new RuntimeException('Failed to execute pdftotext');
@@ -3675,5 +3678,191 @@ class PDFAnalyzer
         return $output;
     }
 } //end class PDFAnalyzer
+
+##### PDFビューアーHTML出力（テキストPDF用） #####################################################################
+function printPdfViewerHTML()
+{
+    // 大容量ファイルをダウンロードすることになるので一旦停止
+    global $conf, $file, $bookName, $escapedFile, $cacheDir, $sharePath, $publicDir;
+
+    // I18nインスタンスを取得
+    $i18n = I18n::getInstance();
+
+    // PDFファイルの実際のパスを取得
+    $pdfPath = readlink("$cacheDir/$file/file");
+    if ($pdfPath === false) {
+        writelog("ERROR printPdfViewerHTML() Cannot read symlink: $cacheDir/$file/file");
+        errorExit("PDF File Error", "PDFファイルの読み込みに失敗しました。");
+    }
+
+    // 相対パスに変換（セキュリティのため）
+    $relativePdfPath = str_replace($sharePath . '/', '', $pdfPath);
+    $encodedPdfPath = urlEncodeFilePath($relativePdfPath);
+
+    // PDFビューアー用のHTML
+    $htmlContent = <<<HTML
+<!DOCTYPE html>
+<html lang="{$i18n->getCurrentLang()}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>$bookName - Comistream PDF Viewer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #2c2c2c;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
+        }
+
+        .pdf-header {
+            background-color: #1a1a1a;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            z-index: 1000;
+            position: relative;
+        }
+
+        .pdf-title {
+            font-size: 16px;
+            font-weight: 500;
+            margin: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+        }
+
+        .pdf-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn {
+            background-color: #4a4a4a;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover {
+            background-color: #5a5a5a;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        .pdf-container {
+            width: 100%;
+            height: calc(100vh - 60px);
+            border: none;
+        }
+
+        .pdf-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background-color: white;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: calc(100vh - 60px);
+            color: white;
+            font-size: 18px;
+        }
+
+        @media (max-width: 768px) {
+            .pdf-header {
+                padding: 8px 15px;
+            }
+
+            .pdf-title {
+                font-size: 14px;
+            }
+
+            .btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+
+            .pdf-controls {
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="pdf-header">
+        <h1 class="pdf-title">$bookName</h1>
+        <div class="pdf-controls">
+            <button class="btn" onclick="window.history.back();">{$i18n->get('back')}</button>
+            <button class="btn btn-primary" onclick="downloadPdf();">Download</button>
+        </div>
+    </div>
+
+    <div class="pdf-container">
+        <div class="loading" id="loading">
+            {$i18n->get('loading')}...
+        </div>
+        <iframe 
+            class="pdf-iframe" 
+            id="pdfFrame"
+            src="$publicDir/$encodedPdfPath"
+            style="display: none;"
+            onload="hideLoading()">
+        </iframe>
+    </div>
+
+    <script>
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('pdfFrame').style.display = 'block';
+        }
+
+        function downloadPdf() {
+            const link = document.createElement('a');
+            link.href = '$publicDir/$encodedPdfPath';
+            link.download = '$bookName';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // エラーハンドリング
+        document.getElementById('pdfFrame').onerror = function() {
+            document.getElementById('loading').innerHTML = 'PDFの読み込みに失敗しました。<br><a href="$publicDir/$encodedPdfPath" style="color: #007bff;">直接ダウンロード</a>';
+        };
+
+        // ページタイトルを設定
+        document.title = '$bookName - Comistream PDF Viewer';
+    </script>
+</body>
+</html>
+HTML;
+
+    // Content-Type ヘッダーを設定
+    header('Content-Type: text/html; charset=utf-8');
+    // レスポンスを圧縮して出力
+    echo compressResponse($htmlContent);
+    writelog("DEBUG printPdfViewerHTML() done for text PDF: $bookName");
+} //end function printPdfViewerHTML
 
 ?>

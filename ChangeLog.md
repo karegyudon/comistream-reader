@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ディレクトリリスティングしてる状態からログインしても元のページに戻ってくるように機能追加
 - 時計の表示/非表示を切り替える時計アイコンをTOCメニューに追加
 - 国際化対応。現在は日本語、英語、台湾、香港に対応。ディレクトリリスティングヘッダとリーダーに切替眼入装備
+- カスタムディレクトリアイコン表示機能搭載。まだ自動作成処理は動作有効にしてない。（BETA）
 
 ### 変更
 - unrar path設定項目を削除
@@ -28,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - findコマンドの代わりにfdコマンドが入っていればそっちを利用するように変更、Dockerfileにはfdを追加インストール
 - Dockerfileの/etc/mime.typesのflacのMIMEをaudio/x-flacからaudio/flacに変更、htaccessも更新
 - pdfファイルを開くときに総ページ数取得にpdfinfoコマンドを利用するように
+- ページサイズが1MBを超える画像は先読み枚数を1.5倍に増やした
 
 ### 修正
 - Dockerfileにunrar追加
@@ -38,6 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - iOS/Androidデバイスで長押しでクイック見開き表示にしたとき、解除してもすぐに戻らない不具合修正
 - タッチパネルデバイスではhoverに反応しないように抑制
 - SynologyのNASでコンテナが起動するように修正 [#11](https://github.com/sorshi/comistream-reader/issues/11)
+- jQuery依存箇所を書き直した
+- Dockerfileのdnf不具合修正
 
 ### 削除
 - なし
