@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Comistream Reader
  *
@@ -103,7 +104,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if (count($parts) == 2) {
                 $key = urldecode($parts[0]);
                 // +を一時的な文字列に置換してからurldecodeし、その後+に戻す
-                $value = str_replace('__PLUS__', '+',
+                $value = str_replace(
+                    '__PLUS__',
+                    '+',
                     urldecode(str_replace('+', '__PLUS__', $parts[1]))
                 );
                 $param[$key] = $value;
@@ -119,7 +122,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (count($parts) == 2) {
             $key = urldecode($parts[0]);
             // +を一時的な文字列に置換してからurldecodeし、その後+に戻す
-            $value = str_replace('__PLUS__', '+',
+            $value = str_replace(
+                '__PLUS__',
+                '+',
                 urldecode(str_replace('+', '__PLUS__', $parts[1]))
             );
             $param[$key] = $value;
@@ -176,7 +181,7 @@ if ($size !== 'FULL' && $size !== 'comp') {
         } elseif ($COOKIE['rawMode'] === 'cmp') {
             $size = 'comp';
             $_SESSION['packetSave'] = true;
-        }else{
+        } else {
             $COOKIE['rawMode'] = 'cmp';
             $size = 'comp';
             $_SESSION['packetSave'] = true;
@@ -216,7 +221,7 @@ if ($mode === 'delete' && !empty($orgname)) {
 
     // ログアウト
     logout($dbh);
-}elseif($mode==='checkAdminAndSession'){
+} elseif ($mode === 'checkAdminAndSession') {
     // 管理者とセッションチェック
     checkAdminAndSession($dbh);
 } elseif ($mode === 'update' && !empty($orgname) && !empty($newname)) {
@@ -272,7 +277,20 @@ if ($mode === 'delete' && !empty($orgname)) {
 } elseif ($mode === 'open' && !empty($file)) {
 
     // ファイルオープン
+    $originalFile = $file; // 元のファイル名を保存
     list($escapedFile, $coverFile, $previewFile) = openPage();
+
+    // PDFファイルかつテキストPDFの場合はブラウザ内蔵PDFビューアーを使用
+    // 大容量ファイルをダウンロードすることになるので一旦利用停止
+    // openPage()後、$fileはハッシュに変更されているので、それを使ってTEXT_PDFフラグをチェック
+    // if (preg_match('/\.pdf$/i', $originalFile) && file_exists("$cacheDir/$file/TEXT_PDF")) {
+    //     writelog("DEBUG TEXT_PDF detected, using browser PDF viewer for: $originalFile");
+    //     printPdfViewerHTML();
+    //     makeCover($escapedFile, $coverFile, $previewFile);
+    //     exit(0);
+    // }
+
+    // 通常のコミックビューアーを使用
     printHTML();
     makeCover($escapedFile, $coverFile, $previewFile);
     exit(0);
