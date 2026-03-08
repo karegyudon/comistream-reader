@@ -50,20 +50,61 @@ jobs:
 
       - name: Show repository tree
         run: |
-          pwd
-          find . -maxdepth 3 | sort
+          echo "PWD=$(pwd)"
+          echo "== top level =="
+          ls -la
+          echo "== find (depth 4) =="
+          find . -maxdepth 4 | sort
+          echo "== Dockerfiles =="
+          find . -type f -name Dockerfile | sort || true
+          echo "== httpd.conf candidates =="
+          find . -type f -name httpd.conf | sort || true
+          echo "== comistream.tar.gz candidates =="
+          find . -type f -name comistream.tar.gz | sort || true
+
+      - name: Detect build paths
+        id: paths
+        run: |
+          DOCKERFILE="$(find . -type f -path '*/comistream/container/Dockerfile' | head -n 1)"
+          if [ -z "$DOCKERFILE" ]; then
+            echo "Cannot find */comistream/container/Dockerfile"
+            exit 1
+          fi
+
+          TOOLS_DIR="$(find . -type d -name 'comistream-tools' | head -n 1)"
+          if [ -z "$TOOLS_DIR" ]; then
+            echo "Cannot find comistream-tools directory"
+            exit 1
+          fi
+
+          echo "dockerfile=$DOCKERFILE" >> "$GITHUB_OUTPUT"
+          echo "toolsdir=$TOOLS_DIR" >> "$GITHUB_OUTPUT"
+
+          echo "Detected Dockerfile: $DOCKERFILE"
+          echo "Detected tools dir: $TOOLS_DIR"
 
       - name: Patch Dockerfile for build context
         run: |
-          sed -i 's|COPY /comistream-tools/|COPY comistream-tools/|g' comistream/container/Dockerfile
-          echo "Patched COPY lines:"
-          grep '^COPY' comistream/container/Dockerfile || true
+          cp "${{ steps.paths.outputs.dockerfile }}" /tmp/Dockerfile.original
+          sed -i 's|COPY /comistream-tools/|COPY comistream-tools/|g' "${{ steps.paths.outputs.dockerfile }}"
+          echo "== patched COPY lines =="
+          grep '^COPY' "${{ steps.paths.outputs.dockerfile }}" || true
 
-      - name: Verify required build files
+      - name: Prepare isolated build context
         run: |
-          test -f comistream/container/Dockerfile
-          test -f comistream-tools/httpd.conf
-          test -f comistream-tools/comistream.tar.gz
+          rm -rf /tmp/build-context
+          mkdir -p /tmp/build-context/comistream/container
+          mkdir -p /tmp/build-context/comistream-tools
+
+          cp "${{ steps.paths.outputs.dockerfile }}" /tmp/build-context/comistream/container/Dockerfile
+          cp -a "${{ steps.paths.outputs.toolsdir }}/." /tmp/build-context/comistream-tools/
+
+          echo "== build context tree =="
+          find /tmp/build-context -maxdepth 4 | sort
+
+          test -f /tmp/build-context/comistream/container/Dockerfile
+          test -f /tmp/build-context/comistream-tools/httpd.conf
+          test -f /tmp/build-context/comistream-tools/comistream.tar.gz
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -87,8 +128,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: .
-          file: ./comistream/container/Dockerfile
+          context: /tmp/build-context
+          file: /tmp/build-context/comistream/container/Dockerfile
           push: true
           platforms: linux/amd64
           tags: ${{ steps.meta.outputs.tags }}
